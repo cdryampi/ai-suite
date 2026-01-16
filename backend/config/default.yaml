@@ -1,0 +1,48 @@
+# AI Suite Default Configuration
+# 
+# This file contains default settings. Do not modify.
+# Create a local.yaml file for local overrides.
+
+env: development
+debug: true
+
+# LLM Provider Configuration
+llm:
+  # Provider: ollama | lmstudio | openai-compatible
+  provider: ollama
+  
+  # Base URL for the LLM API
+  # Ollama default: http://localhost:11434
+  # LM Studio default: http://localhost:1234
+  base_url: http://localhost:11434
+  
+  # Model to use
+  model: llama3.2
+  
+  # Request timeout in seconds
+  timeout: 120
+  
+  # Max retries on failure
+  max_retries: 3
+
+# Output Storage Configuration
+output:
+  # Base path for artifacts (relative to backend/)
+  base_path: ./outputs
+  
+  # Maximum storage per job in MB
+  max_size_mb: 100
+  
+  # Auto-cleanup after N days (0 = never)
+  cleanup_after_days: 30
+
+# Job Runner Configuration
+job:
+  # Maximum concurrent jobs
+  max_concurrent: 4
+  
+  # Default job timeout in seconds
+  default_timeout: 300
+  
+  # Log retention in hours
+  log_retention_hours: 24
