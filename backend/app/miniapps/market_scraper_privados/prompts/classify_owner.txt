@@ -1,0 +1,23 @@
+Eres un experto analista inmobiliario. Tu tarea es analizar el contenido de un anuncio inmobiliario y determinar si el vendedor es un PARTICULAR (Dueño directo) o una INMOBILIARIA (Agencia/Profesional).
+
+Analiza el siguiente texto extraído del anuncio:
+
+```text
+{listing_text}
+```
+
+Instrucciones:
+1. Busca palabras clave como "Particular", "Dueño directo", "Abstenerse agencias" (Indica Particular).
+2. Busca palabras clave como "Honorarios de agencia", "Comisión", nombres de empresas, "REF", "Profesional", "Inmobiliaria" (Indica Inmobiliaria).
+3. Extrae el nombre del propietario si aparece explícitamente (ej. "Preguntar por Juan").
+4. Extrae el número de teléfono si aparece en el texto.
+5. Resume brevemente por qué lo clasificaste así en "notes".
+
+Responde EXCLUSIVAMENTE en formato JSON con la siguiente estructura:
+{{
+    "is_private": boolean,  // true si es particular, false si es agencia
+    "confidence": float,    // 0.0 a 1.0 (Qué tan seguro estás)
+    "owner_name": "string o null", // Nombre del contacto si se encuentra
+    "phone": "string o null",      // Teléfono si se encuentra
+    "notes": "string"       // Breve explicación (ej. "Dice 'soy particular' y da un móvil")
+}}

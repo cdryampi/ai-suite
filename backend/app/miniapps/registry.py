@@ -56,6 +56,19 @@ def register_miniapps(app: Flask) -> None:
     app.config["MARKET_RESEARCH_MINIAPP"] = market_research_miniapp
     MINIAPPS["market_research"] = market_research_miniapp
 
+    # Initialize and register market_scraper_privados mini app
+    from app.miniapps.market_scraper_privados import (
+        bp as market_scraper_bp,
+        init_miniapp as init_ms,
+    )
+
+    market_scraper_miniapp = init_ms(
+        job_store, llm_client, tool_registry, artifact_manager
+    )
+    app.config["MARKET_SCRAPER_PRIVADOS_MINIAPP"] = market_scraper_miniapp
+    MINIAPPS["market_scraper_privados"] = market_scraper_miniapp
+
     # Register blueprints
     app.register_blueprint(realestate_bp)
     app.register_blueprint(market_research_bp)
+    app.register_blueprint(market_scraper_bp)
