@@ -4,7 +4,7 @@ Application settings and configuration.
 Configuration is loaded in this order (later overrides earlier):
 1. default.yaml (committed defaults)
 2. local.yaml (local overrides, gitignored)
-3. Environment variables
+3. Environment variables (.env file or system env)
 """
 
 import os
@@ -13,6 +13,10 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+from dotenv import load_dotenv
+
+# Load .env file if it exists
+load_dotenv()
 
 
 @dataclass
@@ -100,4 +104,34 @@ def get_settings() -> Settings:
             local_settings = Settings.from_yaml(local_path)
             _settings = local_settings
 
+        # Override with environment variables
+        _apply_env_overrides(_settings)
+
     return _settings
+
+
+def _apply_env_overrides(settings: Settings) -> None:
+    """Apply environment variable overrides to settings."""
+    # LLM settings
+    if os.getenv("LLM_PROVIDER"):
+        settings.llm.provider = os.getenv("LLM_PROVIDER")
+    if os.getenv("LLM_BASE_URL"):
+        settings.llm.base_url = os.getenv("LLM_BASE_URL")
+    if os.getenv("LLM_MODEL"):
+        settings.llm.model = os.getenv("LLM_MODEL")
+    if os.getenv("LLM_TIMEOUT"):
+        settings.llm.timeout = int(os.getenv("LLM_TIMEOUT"))
+    if os.getenv("LLM_API_KEY"):
+        settings.llm.api_key = os.getenv("LLM_API_KEY")
+
+    # Output settings
+    if os.getenv("OUTPUT_BASE_PATH"):
+        settings.output.base_path = os.getenv("OUTPUT_BASE_PATH")
+    if os.getenv("OUTPUT_MAX_SIZE_MB"):
+        settings.output.max_size_mb = int(os.getenv("OUTPUT_MAX_SIZE_MB"))
+
+    # Job settings
+    if os.getenv("JOB_MAX_WORKERS"):
+        settings.job.max_concurrent = int(os.getenv("JOB_MAX_WORKERS"))
+    if os.getenv("JOB_DEFAULT_TIMEOUT"):
+        settings.job.default_timeout = int(os.getenv("JOB_DEFAULT_TIMEOUT"))
