@@ -9,6 +9,10 @@ from .classifier import ListingClassifier
 from .exporter import LeadExporter
 from .providers.idealista import IdealistaProvider
 from .providers.fotocasa import FotocasaProvider
+from .providers.habitaclia import HabitacliaProvider
+from .providers.milanuncios import MilanunciosProvider
+from .providers.pisos import PisosProvider
+from .providers.wallapop import WallapopProvider
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +27,12 @@ class MarketScraperWorkflow(BaseMiniApp):
             id="market_scraper_privados",
             name="Private Market Scraper",
             description="Scrapes and identifies private real estate listings.",
-            version="1.1.0",
+            version="1.3.0",
             author="Sttil Team",
             tags=["real-estate", "scraper", "lead-gen"],
-            variants={1: "Default - Idealista + Fotocasa (Demo)"},
+            variants={
+                1: "Default - All 6 Providers (Idealista, Fotocasa, Habitaclia, Milanuncios, Pisos, Wallapop)"
+            },
         )
 
     def run(
@@ -69,7 +75,14 @@ class MarketScraperWorkflow(BaseMiniApp):
             # 2. Scraping (Multi-provider)
             self._log(job_id, "Starting scraping phase...")
 
-            providers = [IdealistaProvider(), FotocasaProvider()]
+            providers = [
+                IdealistaProvider(),
+                FotocasaProvider(),
+                HabitacliaProvider(),
+                MilanunciosProvider(),
+                PisosProvider(),
+                WallapopProvider(),
+            ]
 
             total_new_count = 0
 
