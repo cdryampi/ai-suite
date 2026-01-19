@@ -1,0 +1,77 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import MiniAppRunner from '../../components/MiniAppRunner';
+
+export function getStaticPaths() {
+  return [
+    { params: { id: 'realestate_ads' } },
+    { params: { id: 'market_research' } },
+    { params: { id: 'social_posts' } },
+    { params: { id: 'document_summary' } },
+  ];
+}
+
+const { id } = Astro.params;
+
+// In a real scenario, fetch metadata from API
+// const res = await fetch(`http://127.0.0.1:5000/api/miniapps/${id}/info`);
+// const metadata = await res.json();
+
+const miniApps = {
+  realestate_ads: {
+    title: 'Real Estate Ad Generator',
+    description: 'Generate compelling real estate advertisements from listing URLs.',
+    icon: '🏠'
+  },
+  market_research: {
+    title: 'Market Research Assistant',
+    description: 'Deep dive research on companies, products, or trends.',
+    icon: '📊'
+  },
+  social_posts: {
+    title: 'Social Media Content',
+    description: 'Create engaging social media posts.',
+    icon: '📱'
+  },
+  document_summary: {
+    title: 'Document Summarizer',
+    description: 'Get concise summaries from complex documents.',
+    icon: '📄'
+  }
+};
+
+const app = miniApps[id as keyof typeof miniApps];
+---
+
+<Layout title={app ? app.title : 'Mini App'}>
+  <div class="mb-6">
+    <a href="/" class="text-sm text-muted-foreground hover:text-foreground mb-2 inline-flex items-center gap-1 transition-colors">
+      ← Back to Dashboard
+    </a>
+    <h1 class="text-3xl font-bold text-foreground flex items-center gap-3">
+      <span class="text-4xl">{app?.icon}</span>
+      {app?.title}
+    </h1>
+    <p class="text-muted-foreground mt-1 max-w-2xl">
+      {app?.description}
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Runner Area -->
+    <div class="lg:col-span-2">
+      <MiniAppRunner client:load appId={id} />
+    </div>
+
+    <!-- Info / History Sidebar (Future) -->
+    <div class="space-y-6">
+      <div class="rounded-xl border border-border bg-card text-card-foreground p-6 shadow-sm">
+        <h3 class="font-semibold mb-3">About this App</h3>
+        <p class="text-sm text-muted-foreground">
+          This mini app uses AI to automate your workflow. 
+          Configure the inputs on the left and click Run to start.
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>

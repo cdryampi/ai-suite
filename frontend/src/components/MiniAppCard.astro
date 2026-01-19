@@ -22,8 +22,9 @@ const isAvailable = status !== 'coming_soon';
 ---
 
 <div class={`
-  group relative bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm transition-all duration-200
-  ${isAvailable ? 'hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer' : 'opacity-75 cursor-not-allowed'}
+  mini-app-card opacity-0 translate-y-4
+  group relative bg-card text-card-foreground rounded-xl border border-border p-6 shadow-sm transition-all duration-200
+  ${isAvailable ? 'hover:shadow-md hover:border-primary/50 cursor-pointer' : 'opacity-75 cursor-not-allowed'}
 `}>
   {isAvailable && (
     <a href={`/miniapps/${id}`} class="absolute inset-0 z-10" aria-label={`Open ${title}`}></a>

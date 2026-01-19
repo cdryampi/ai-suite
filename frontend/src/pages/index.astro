@@ -41,28 +41,28 @@ const miniApps = [
 
 <Layout title="Dashboard">
   <div class="mb-8">
-    <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+    <h1 class="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
       Dashboard
     </h1>
-    <p class="text-slate-600 dark:text-slate-400">
+    <p class="text-muted-foreground">
       Select a mini app to launch your AI workflow.
     </p>
   </div>
 
   <!-- Featured / Quick Start Section -->
-  <div class="mb-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+  <div class="mb-10 bg-gradient-to-r from-primary to-blue-600 rounded-2xl p-8 text-primary-foreground shadow-lg relative overflow-hidden">
     <div class="relative z-10 max-w-2xl">
-      <div class="flex items-center gap-2 mb-4 text-blue-100 font-medium">
+      <div class="flex items-center gap-2 mb-4 text-primary-foreground/80 font-medium">
         <Sparkles className="w-5 h-5" />
         <span>Recommended for you</span>
       </div>
       <h2 class="text-3xl font-bold mb-4">Generate Real Estate Ads in Seconds</h2>
-      <p class="text-blue-100 mb-6 text-lg">
+      <p class="text-primary-foreground/90 mb-6 text-lg">
         Turn any property listing URL into a professional, SEO-optimized advertisement ready for publishing.
       </p>
       <a 
         href="/miniapps/realestate_ads" 
-        class="inline-flex items-center justify-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+        class="inline-flex items-center justify-center px-6 py-3 bg-background text-foreground font-semibold rounded-lg hover:bg-secondary transition-colors"
       >
         Try it now
       </a>
@@ -78,4 +78,39 @@ const miniApps = [
       <MiniAppCard {...app} />
     ))}
   </div>
+
+  <script>
+    import { gsap } from "gsap";
+    
+    document.addEventListener('astro:page-load', () => {
+      gsap.to(".mini-app-card", {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: "power2.out"
+      });
+    });
+    
+    // Fallback for initial load if view transitions aren't used
+    if (document.readyState === 'complete') {
+        gsap.to(".mini-app-card", {
+        opacity: 1,
+        y: 0,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: "power2.out"
+      });
+    } else {
+        window.addEventListener('load', () => {
+            gsap.to(".mini-app-card", {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            stagger: 0.1,
+            ease: "power2.out"
+          });
+        });
+    }
+  </script>
 </Layout>

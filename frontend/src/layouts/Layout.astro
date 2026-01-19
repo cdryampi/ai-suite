@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 import Sidebar from '../components/Sidebar.astro';
+import '@fontsource/geist-sans';
+import '@fontsource/geist-mono';
 
 interface Props {
 	title: string;
@@ -10,7 +12,7 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="description" content="AI Suite - Local-first AI Application Platform" />
@@ -18,11 +20,8 @@ const { title } = Astro.props;
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title} | AI Suite</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 	</head>
-	<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+	<body class="bg-background text-foreground font-sans antialiased">
 		<div class="flex min-h-screen">
             <Sidebar />
             <main class="flex-1 ml-64 p-8">
