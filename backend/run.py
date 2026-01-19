@@ -28,15 +28,13 @@ def main():
 
     app = create_app(env)
 
-    print(f"""
-╔══════════════════════════════════════════════════════════════╗
-║                      AI Suite Backend                         ║
-╠══════════════════════════════════════════════════════════════╣
-║  Environment: {env:<46} ║
-║  Server:      http://{host}:{port:<36} ║
-║  API Docs:    http://{host}:{port}/api/health{" " * 24} ║
-╚══════════════════════════════════════════════════════════════╝
-""")
+    print("=" * 70)
+    print(f"AI Suite Backend")
+    print("=" * 70)
+    print(f"Environment: {env}")
+    print(f"Server: http://{host}:{port}")
+    print(f"Health Check: http://{host}:{port}/api/health")
+    print("=" * 70)
 
     app.run(host=host, port=port, debug=(env == "development"), threaded=True)
 
