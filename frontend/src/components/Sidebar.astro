@@ -13,16 +13,16 @@ const menuItems = [
 ];
 ---
 
-<aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 flex flex-col z-10">
-  <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-      <span class="text-white font-bold text-lg">AI</span>
+<aside class="w-80 bg-sidebar border-r border-sidebar-border h-screen fixed left-0 top-0 flex flex-col z-10">
+  <div class="p-8 border-b border-sidebar-border flex items-center gap-4">
+    <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+      <span class="text-primary-foreground font-bold text-2xl">AI</span>
     </div>
-    <span class="font-bold text-xl text-slate-800 dark:text-white">AI Suite</span>
+    <span class="font-bold text-2xl text-sidebar-foreground">AI Suite</span>
   </div>
 
-  <nav class="flex-1 overflow-y-auto py-6 px-3">
-    <ul class="space-y-1">
+  <nav class="flex-1 overflow-y-auto py-8 px-4">
+    <ul class="space-y-2">
       {menuItems.map((item) => {
         const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
         const Icon = item.icon;
@@ -32,13 +32,13 @@ const menuItems = [
             <a 
               href={item.href}
               class:list={[
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-4 px-6 py-4 rounded-xl text-lg font-medium transition-all duration-200",
                 isActive 
-                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" 
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm scale-105 origin-left" 
+                  : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-foreground hover:translate-x-1"
               ]}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-7 h-7" />
               {item.label}
             </a>
           </li>
@@ -47,7 +47,7 @@ const menuItems = [
     </ul>
   </nav>
 
-  <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+  <div class="p-6 border-t border-sidebar-border">
     <SystemStatus client:load />
   </div>
 </aside>

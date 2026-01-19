@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import MiniAppRunner from '../../components/MiniAppRunner';
+import { Home, BarChart2, Smartphone, FileText } from 'lucide-react';
 
 export function getStaticPaths() {
   return [
@@ -21,26 +22,27 @@ const miniApps = {
   realestate_ads: {
     title: 'Real Estate Ad Generator',
     description: 'Generate compelling real estate advertisements from listing URLs.',
-    icon: '🏠'
+    icon: Home
   },
   market_research: {
     title: 'Market Research Assistant',
     description: 'Deep dive research on companies, products, or trends.',
-    icon: '📊'
+    icon: BarChart2
   },
   social_posts: {
     title: 'Social Media Content',
     description: 'Create engaging social media posts.',
-    icon: '📱'
+    icon: Smartphone
   },
   document_summary: {
     title: 'Document Summarizer',
     description: 'Get concise summaries from complex documents.',
-    icon: '📄'
+    icon: FileText
   }
 };
 
 const app = miniApps[id as keyof typeof miniApps];
+const Icon = app ? app.icon : Home;
 ---
 
 <Layout title={app ? app.title : 'Mini App'}>
@@ -49,7 +51,9 @@ const app = miniApps[id as keyof typeof miniApps];
       ← Back to Dashboard
     </a>
     <h1 class="text-3xl font-bold text-foreground flex items-center gap-3">
-      <span class="text-4xl">{app?.icon}</span>
+      <div class="p-2 bg-primary/10 rounded-lg text-primary">
+        <Icon className="w-8 h-8" />
+      </div>
       {app?.title}
     </h1>
     <p class="text-muted-foreground mt-1 max-w-2xl">

@@ -37,10 +37,10 @@
   --sidebar-accent-foreground: oklch(0 0 0);
   --sidebar-border: oklch(0.9400 0 0);
   --sidebar-ring: oklch(0 0 0);
-  --font-sans: Geist, sans-serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: Geist Mono, monospace;
-  --radius: 0.5rem;
+  --font-mono: 'Inter', monospace;
+  --radius: 1rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
   --shadow-blur: 2px;
@@ -171,5 +171,28 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 18px; /* Base font size increase */
+  }
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+  h2 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  button, a {
+    @apply cursor-pointer touch-manipulation; /* Better touch handling */
+  }
+}
+
+/* Increase touch targets and spacing globally */
+@layer utilities {
+  .btn-lg {
+    @apply h-14 px-8 text-lg;
+  }
+  .input-lg {
+    @apply h-14 text-lg px-4;
   }
 }

@@ -5,12 +5,12 @@ interface Props {
   id: string;
   title: string;
   description: string;
-  icon: string;
+  icon: any;
   status: 'ready' | 'beta' | 'coming_soon';
   tags: string[];
 }
 
-const { id, title, description, icon, status, tags } = Astro.props;
+const { id, title, description, icon: Icon, status, tags } = Astro.props;
 
 const statusColors = {
   ready: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -31,8 +31,8 @@ const isAvailable = status !== 'coming_soon';
   )}
 
   <div class="flex justify-between items-start mb-4">
-    <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-2xl">
-      {icon}
+    <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+      <Icon className="w-6 h-6" />
     </div>
     <span class={`text-xs font-medium px-2.5 py-0.5 rounded-full ${statusColors[status]}`}>
       {status === 'ready' ? 'Ready' : status === 'beta' ? 'Beta' : 'Coming Soon'}

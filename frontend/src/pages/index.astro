@@ -1,14 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MiniAppCard from '../components/MiniAppCard.astro';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Home, BarChart2, Smartphone, FileText } from 'lucide-react';
 
 const miniApps = [
   {
     id: 'realestate_ads',
     title: 'Real Estate Ad Generator',
     description: 'Generate compelling real estate advertisements from listing URLs. Automatically extracts features and writes professional copy.',
-    icon: '🏠',
+    icon: Home,
     status: 'ready',
     tags: ['marketing', 'real-estate']
   },
@@ -16,7 +16,7 @@ const miniApps = [
     id: 'market_research',
     title: 'Market Research Assistant',
     description: 'Deep dive research on companies, products, or trends. Aggregates data from multiple sources and provides a comprehensive report.',
-    icon: '📊',
+    icon: BarChart2,
     status: 'coming_soon',
     tags: ['research', 'analysis']
   },
@@ -24,7 +24,7 @@ const miniApps = [
     id: 'social_posts',
     title: 'Social Media Content',
     description: 'Create engaging social media posts for various platforms based on your content or ideas.',
-    icon: '📱',
+    icon: Smartphone,
     status: 'coming_soon',
     tags: ['social', 'marketing']
   },
@@ -32,7 +32,7 @@ const miniApps = [
     id: 'document_summary',
     title: 'Document Summarizer',
     description: 'Upload complex documents and get concise, actionable summaries and key takeaways.',
-    icon: '📄',
+    icon: FileText,
     status: 'coming_soon',
     tags: ['productivity', 'text']
   }
