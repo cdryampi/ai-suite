@@ -33,32 +33,44 @@ class IdealistaProvider(BaseProvider):
         # to ensure the pipeline works without triggering IP bans.
 
         results = []
-        # Mock logic for demonstration:
-        # results.append(ListingMetadata(
-        #     external_id="12345",
-        #     url="https://www.idealista.com/inmueble/12345/",
-        #     title=f"Piso en {city}",
-        #     price="250.000"
-        # ))
+        # Mock logic for demonstration (Variant 1):
+        results.append(
+            ListingMetadata(
+                external_id="12345_demo",
+                url="https://www.idealista.com/inmueble/12345_demo/",
+                title=f"Piso en {city} - OPORTUNIDAD PARTICULAR",
+                price="250.000",
+                location=city,
+            )
+        )
 
         return results
 
     def fetch_details(self, url: str) -> Optional[RawListingData]:
         logger.info(f"Fetching Idealista details: {url}")
 
-        html = self._get_html(url)
-        if not html:
-            return None
-
-        # Parse HTML here (BeautifulSoup)
-        # title = soup.find("h1").text ...
+        # Mock HTML for demo
+        html = """
+        <html>
+            <body>
+                <h1>Piso en venta en Madrid</h1>
+                <div class="price">250.000 €</div>
+                <div class="description">
+                    Vendo piso precioso en el centro.
+                    Soy particular, abstenerse agencias por favor.
+                    Llamar a Juan al 600 123 456.
+                    Reformado, exterior, 3 habitaciones.
+                </div>
+            </body>
+        </html>
+        """
 
         return RawListingData(
             url=url,
             html_content=html,
             parsed_data={
-                "title": "Extracted Title",
-                "price": "Extracted Price",
-                "description": "Extracted Description",
+                "title": "Piso en venta en Madrid",
+                "price": "250.000 €",
+                "description": "Vendo piso precioso. Soy particular, abstenerse agencias. Llamar a Juan al 600 123 456.",
             },
         )

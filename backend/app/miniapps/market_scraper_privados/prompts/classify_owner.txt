@@ -14,10 +14,10 @@ Instrucciones:
 5. Resume brevemente por qué lo clasificaste así en "notes".
 
 Responde EXCLUSIVAMENTE en formato JSON con la siguiente estructura:
-{
+{{
     "is_private": boolean,  // true si es particular, false si es agencia
     "confidence": float,    // 0.0 a 1.0 (Qué tan seguro estás)
     "owner_name": "string o null", // Nombre del contacto si se encuentra
     "phone": "string o null",      // Teléfono si se encuentra
     "notes": "string"       // Breve explicación (ej. "Dice 'soy particular' y da un móvil")
-}
+}}
