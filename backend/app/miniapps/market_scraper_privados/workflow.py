@@ -11,6 +11,8 @@ from .providers.idealista import IdealistaProvider
 from .providers.fotocasa import FotocasaProvider
 from .providers.habitaclia import HabitacliaProvider
 from .providers.milanuncios import MilanunciosProvider
+from .providers.pisos import PisosProvider
+from .providers.wallapop import WallapopProvider
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +27,11 @@ class MarketScraperWorkflow(BaseMiniApp):
             id="market_scraper_privados",
             name="Private Market Scraper",
             description="Scrapes and identifies private real estate listings.",
-            version="1.2.0",
+            version="1.3.0",
             author="Sttil Team",
             tags=["real-estate", "scraper", "lead-gen"],
             variants={
-                1: "Default - Top 4 Portals (Idealista, Fotocasa, Habitaclia, Milanuncios)"
+                1: "Default - All 6 Providers (Idealista, Fotocasa, Habitaclia, Milanuncios, Pisos, Wallapop)"
             },
         )
 
@@ -78,6 +80,8 @@ class MarketScraperWorkflow(BaseMiniApp):
                 FotocasaProvider(),
                 HabitacliaProvider(),
                 MilanunciosProvider(),
+                PisosProvider(),
+                WallapopProvider(),
             ]
 
             total_new_count = 0

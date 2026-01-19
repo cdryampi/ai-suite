@@ -43,6 +43,8 @@ class TestMarketWorkflow(unittest.TestCase):
         )
 
     @patch("app.miniapps.market_scraper_privados.workflow.Database")
+    @patch("app.miniapps.market_scraper_privados.workflow.WallapopProvider")
+    @patch("app.miniapps.market_scraper_privados.workflow.PisosProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.MilanunciosProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.HabitacliaProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.FotocasaProvider")
@@ -55,6 +57,8 @@ class TestMarketWorkflow(unittest.TestCase):
         MockFotocasa,
         MockHabitaclia,
         MockMilanuncios,
+        MockPisos,
+        MockWallapop,
         MockDatabase,
     ):
         # Mock DB
@@ -126,6 +130,32 @@ class TestMarketWorkflow(unittest.TestCase):
             parsed_data={"description": "desc 4"},
         )
 
+        # Mock Pisos
+        mock_pisos = MockPisos.return_value
+        mock_pisos.name = "pisos"
+        mock_pisos.search.return_value = [
+            ListingMetadata(external_id="5", url="http://pisos.com/5", title="Title 5")
+        ]
+        mock_pisos.fetch_details.return_value = RawListingData(
+            url="http://pisos.com/5",
+            html_content="<html>Description 5</html>",
+            parsed_data={"description": "desc 5"},
+        )
+
+        # Mock Wallapop
+        mock_wallapop = MockWallapop.return_value
+        mock_wallapop.name = "wallapop"
+        mock_wallapop.search.return_value = [
+            ListingMetadata(
+                external_id="6", url="http://wallapop.com/6", title="Title 6"
+            )
+        ]
+        mock_wallapop.fetch_details.return_value = RawListingData(
+            url="http://wallapop.com/6",
+            html_content="<html>Description 6</html>",
+            parsed_data={"description": "desc 6"},
+        )
+
         # Mock Classifier
         mock_classifier = MockClassifier.return_value
         mock_classifier.classify_listing.return_value = {
@@ -145,9 +175,9 @@ class TestMarketWorkflow(unittest.TestCase):
         self.assertTrue(self.artifact_manager.save_text.called)  # CSV export
 
         # Verify result stats
-        # 1 from each of 4 providers = 4 scraped
+        # 1 from each of 6 providers = 6 scraped
         print("Workflow Result:", result.result)
-        self.assertEqual(result.result["scraped"], 4)
+        self.assertEqual(result.result["scraped"], 6)
         # We mocked get_pending_listings to return 1 item, so 1 classified
         self.assertEqual(result.result["private_found"], 1)
 
