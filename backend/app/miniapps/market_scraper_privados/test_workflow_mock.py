@@ -43,11 +43,19 @@ class TestMarketWorkflow(unittest.TestCase):
         )
 
     @patch("app.miniapps.market_scraper_privados.workflow.Database")
+    @patch("app.miniapps.market_scraper_privados.workflow.MilanunciosProvider")
+    @patch("app.miniapps.market_scraper_privados.workflow.HabitacliaProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.FotocasaProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.IdealistaProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.ListingClassifier")
     def test_run_success(
-        self, MockClassifier, MockIdealista, MockFotocasa, MockDatabase
+        self,
+        MockClassifier,
+        MockIdealista,
+        MockFotocasa,
+        MockHabitaclia,
+        MockMilanuncios,
+        MockDatabase,
     ):
         # Mock DB
         mock_db = MockDatabase.return_value
@@ -90,6 +98,34 @@ class TestMarketWorkflow(unittest.TestCase):
             parsed_data={"description": "desc 2"},
         )
 
+        # Mock Habitaclia
+        mock_habitaclia = MockHabitaclia.return_value
+        mock_habitaclia.name = "habitaclia"
+        mock_habitaclia.search.return_value = [
+            ListingMetadata(
+                external_id="3", url="http://habitaclia.com/3", title="Title 3"
+            )
+        ]
+        mock_habitaclia.fetch_details.return_value = RawListingData(
+            url="http://habitaclia.com/3",
+            html_content="<html>Description 3</html>",
+            parsed_data={"description": "desc 3"},
+        )
+
+        # Mock Milanuncios
+        mock_milanuncios = MockMilanuncios.return_value
+        mock_milanuncios.name = "milanuncios"
+        mock_milanuncios.search.return_value = [
+            ListingMetadata(
+                external_id="4", url="http://milanuncios.com/4", title="Title 4"
+            )
+        ]
+        mock_milanuncios.fetch_details.return_value = RawListingData(
+            url="http://milanuncios.com/4",
+            html_content="<html>Description 4</html>",
+            parsed_data={"description": "desc 4"},
+        )
+
         # Mock Classifier
         mock_classifier = MockClassifier.return_value
         mock_classifier.classify_listing.return_value = {
@@ -109,9 +145,9 @@ class TestMarketWorkflow(unittest.TestCase):
         self.assertTrue(self.artifact_manager.save_text.called)  # CSV export
 
         # Verify result stats
-        # 1 from Idealista + 1 from Fotocasa = 2 scraped
+        # 1 from each of 4 providers = 4 scraped
         print("Workflow Result:", result.result)
-        self.assertEqual(result.result["scraped"], 2)
+        self.assertEqual(result.result["scraped"], 4)
         # We mocked get_pending_listings to return 1 item, so 1 classified
         self.assertEqual(result.result["private_found"], 1)
 
