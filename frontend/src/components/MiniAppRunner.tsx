@@ -26,6 +26,10 @@ interface JobStatus {
 
 export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
   const [inputUrl, setInputUrl] = useState('');
+  // Market Scraper specific state
+  const [city, setCity] = useState('Madrid');
+  const [maxItems, setMaxItems] = useState(10);
+
   const [jobId, setJobId] = useState<string | null>(null);
   const [status, setStatus] = useState<JobStatus['status']>('pending');
   const [logs, setLogs] = useState<string[]>([]);
@@ -75,7 +79,12 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
   }, [jobId, status, appId]);
 
   const handleRun = async () => {
-    if (!inputUrl) return;
+    // Validate inputs based on appId
+    if (appId === 'market_scraper_privados') {
+        if (!city) return;
+    } else {
+        if (!inputUrl) return;
+    }
     
     setStatus('running');
     setLogs(['Starting job...']);
@@ -83,10 +92,18 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     setArtifacts([]);
     
     try {
+      let bodyData: any = { variant: 1 };
+      
+      if (appId === 'market_scraper_privados') {
+          bodyData = { ...bodyData, city, max_items: maxItems };
+      } else {
+          bodyData = { ...bodyData, input: inputUrl };
+      }
+
       const res = await fetch(`http://127.0.0.1:5000/api/miniapps/${appId}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input: inputUrl, variant: 1 })
+        body: JSON.stringify(bodyData)
       });
       
       const data = await res.json();
@@ -104,25 +121,55 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     }
   };
 
+  const isRunning = status === 'running';
+  const canRun = appId === 'market_scraper_privados' ? !!city : !!inputUrl;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Input Section */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Configuration</h2>
-        <div className="flex gap-3">
-          <input
-            type="url"
-            placeholder="Enter listing URL (e.g. https://example.com/property)"
-            value={inputUrl}
-            onChange={(e) => setInputUrl(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          />
+        <div className="flex gap-3 items-end">
+          {appId === 'market_scraper_privados' ? (
+            <>
+              <div className="flex-1 space-y-2">
+                <label className="text-sm font-medium">City / Zone</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Madrid"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+              <div className="w-32 space-y-2">
+                <label className="text-sm font-medium">Max Items</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={maxItems}
+                  onChange={(e) => setMaxItems(parseInt(e.target.value))}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+            </>
+          ) : (
+            <input
+              type="url"
+              placeholder="Enter listing URL (e.g. https://example.com/property)"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          )}
+          
           <Button 
             onClick={handleRun} 
-            disabled={status === 'running' || !inputUrl}
+            disabled={isRunning || !canRun}
             className="w-32"
           >
-            {status === 'running' ? (
+            {isRunning ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running</>
             ) : (
               <><Play className="mr-2 h-4 w-4" /> Run</>

@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import MiniAppRunner from '../../components/MiniAppRunner';
-import { Home, BarChart2, Smartphone, FileText } from 'lucide-react';
+import { Home, BarChart2, Smartphone, FileText, Search } from 'lucide-react';
 
 export function getStaticPaths() {
   return [
@@ -9,6 +9,7 @@ export function getStaticPaths() {
     { params: { id: 'market_research' } },
     { params: { id: 'social_posts' } },
     { params: { id: 'document_summary' } },
+    { params: { id: 'market_scraper_privados' } },
   ];
 }
 
@@ -38,6 +39,11 @@ const miniApps = {
     title: 'Document Summarizer',
     description: 'Get concise summaries from complex documents.',
     icon: FileText
+  },
+  market_scraper_privados: {
+    title: 'Buscador de Particulares',
+    description: 'Scrapea portales inmobiliarios y detecta propietarios particulares usando IA.',
+    icon: Search
   }
 };
 
