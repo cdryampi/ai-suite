@@ -36,6 +36,7 @@ def register_miniapps(app: Flask) -> None:
     # Store in app config for routes
     app.config["JOB_STORE"] = job_store
     app.config["ARTIFACT_MANAGER"] = artifact_manager
+    app.config["JOB_RUNNER"] = app.job_runner
 
     # Initialize and register realestate_ads mini app
     realestate_miniapp = init_miniapp(
