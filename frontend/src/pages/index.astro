@@ -1,0 +1,81 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MiniAppCard from '../components/MiniAppCard.astro';
+import { Sparkles } from 'lucide-react';
+
+const miniApps = [
+  {
+    id: 'realestate_ads',
+    title: 'Real Estate Ad Generator',
+    description: 'Generate compelling real estate advertisements from listing URLs. Automatically extracts features and writes professional copy.',
+    icon: '🏠',
+    status: 'ready',
+    tags: ['marketing', 'real-estate']
+  },
+  {
+    id: 'market_research',
+    title: 'Market Research Assistant',
+    description: 'Deep dive research on companies, products, or trends. Aggregates data from multiple sources and provides a comprehensive report.',
+    icon: '📊',
+    status: 'coming_soon',
+    tags: ['research', 'analysis']
+  },
+  {
+    id: 'social_posts',
+    title: 'Social Media Content',
+    description: 'Create engaging social media posts for various platforms based on your content or ideas.',
+    icon: '📱',
+    status: 'coming_soon',
+    tags: ['social', 'marketing']
+  },
+  {
+    id: 'document_summary',
+    title: 'Document Summarizer',
+    description: 'Upload complex documents and get concise, actionable summaries and key takeaways.',
+    icon: '📄',
+    status: 'coming_soon',
+    tags: ['productivity', 'text']
+  }
+] as const;
+---
+
+<Layout title="Dashboard">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+      Dashboard
+    </h1>
+    <p class="text-slate-600 dark:text-slate-400">
+      Select a mini app to launch your AI workflow.
+    </p>
+  </div>
+
+  <!-- Featured / Quick Start Section -->
+  <div class="mb-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+    <div class="relative z-10 max-w-2xl">
+      <div class="flex items-center gap-2 mb-4 text-blue-100 font-medium">
+        <Sparkles className="w-5 h-5" />
+        <span>Recommended for you</span>
+      </div>
+      <h2 class="text-3xl font-bold mb-4">Generate Real Estate Ads in Seconds</h2>
+      <p class="text-blue-100 mb-6 text-lg">
+        Turn any property listing URL into a professional, SEO-optimized advertisement ready for publishing.
+      </p>
+      <a 
+        href="/miniapps/realestate_ads" 
+        class="inline-flex items-center justify-center px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+      >
+        Try it now
+      </a>
+    </div>
+    
+    <!-- Decorative circles -->
+    <div class="absolute top-0 right-0 -mt-20 -mr-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 right-20 -mb-20 w-60 h-60 bg-indigo-500/30 rounded-full blur-2xl"></div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {miniApps.map((app) => (
+      <MiniAppCard {...app} />
+    ))}
+  </div>
+</Layout>

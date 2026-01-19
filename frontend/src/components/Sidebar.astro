@@ -1,0 +1,53 @@
+---
+import { LayoutDashboard, Settings, Box, Play, Terminal } from 'lucide-react';
+import SystemStatus from './SystemStatus';
+
+const currentPath = Astro.url.pathname;
+
+const menuItems = [
+  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Mini Apps', href: '/miniapps', icon: Box },
+  { label: 'Playground', href: '/playground', icon: Play },
+  { label: 'Logs', href: '/logs', icon: Terminal },
+  { label: 'Settings', href: '/settings', icon: Settings },
+];
+---
+
+<aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 h-screen fixed left-0 top-0 flex flex-col z-10">
+  <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+      <span class="text-white font-bold text-lg">AI</span>
+    </div>
+    <span class="font-bold text-xl text-slate-800 dark:text-white">AI Suite</span>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto py-6 px-3">
+    <ul class="space-y-1">
+      {menuItems.map((item) => {
+        const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href));
+        const Icon = item.icon;
+        
+        return (
+          <li>
+            <a 
+              href={item.href}
+              class:list={[
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                isActive 
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" 
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+              ]}
+            >
+              <Icon className="w-5 h-5" />
+              {item.label}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+
+  <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+    <SystemStatus client:load />
+  </div>
+</aside>

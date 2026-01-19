@@ -1,0 +1,35 @@
+---
+import '../styles/global.css';
+import Sidebar from '../components/Sidebar.astro';
+
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="AI Suite - Local-first AI Application Platform" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title} | AI Suite</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+	</head>
+	<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+		<div class="flex min-h-screen">
+            <Sidebar />
+            <main class="flex-1 ml-64 p-8">
+                <div class="max-w-7xl mx-auto">
+                    <slot />
+                </div>
+            </main>
+        </div>
+	</body>
+</html>
