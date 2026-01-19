@@ -244,15 +244,32 @@ class Planner:
         response = self.llm_client.complete(
             prompt=prompt,
             max_tokens=2000,
-            temperature=0.3,  # Lower temperature for more deterministic planning
+            temperature=0.1,  # Very low temperature for strict JSON formatting
         )
 
-        # Parse response as JSON
+        # Parse response as JSON - try to extract JSON if embedded in text
         try:
             plan_data = json.loads(response)
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
-            raise ValueError(f"LLM returned invalid JSON: {response[:200]}...")
+            # Try to extract JSON from response
+            logger.warning(f"Initial JSON parse failed: {e}")
+            logger.info("Attempting to extract JSON from response...")
+
+            # Look for JSON object in the response
+            import re
+
+            json_match = re.search(r'\{[\s\S]*"steps"[\s\S]*\}', response)
+
+            if json_match:
+                try:
+                    plan_data = json.loads(json_match.group(0))
+                    logger.info("Successfully extracted JSON from response")
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse extracted JSON")
+                    raise ValueError(f"LLM returned invalid JSON: {response[:200]}...")
+            else:
+                logger.error(f"No JSON found in response: {response[:200]}")
+                raise ValueError(f"LLM returned invalid JSON: {response[:200]}...")
 
         # Convert to ExecutionPlan
         steps = []
@@ -364,13 +381,13 @@ class Planner:
             if allowed_tools and tool_name not in allowed_tools:
                 continue
 
-            info = self.tool_registry.get_tool_info(tool_name)
-            if info:
+            tool = self.tool_registry.get_tool(tool_name)
+            if tool:
                 descriptions.append(
                     {
-                        "name": tool_name,
-                        "description": info.get("description", ""),
-                        "parameters": info.get("parameters", {}),
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": tool.input_schema.get("properties", {}),
                     }
                 )
 
@@ -401,24 +418,25 @@ class Planner:
 
         context_text = json.dumps(context, indent=2)
 
-        prompt = f"""You are a workflow planner. Given a goal and available tools, generate a step-by-step execution plan.
+        prompt = f"""You are a workflow planner that generates ONLY valid JSON output.
 
-**Goal:** {goal}
+GOAL: {goal}
 
-**Available Context:**
+AVAILABLE CONTEXT:
 {context_text}
 
-**Available Tools:**
+AVAILABLE TOOLS:
 {tools_text}
 
-**Instructions:**
+INSTRUCTIONS:
 1. Break down the goal into sequential steps (max {max_steps} steps)
-2. Each step must use exactly ONE tool from the available tools
-3. Steps execute sequentially - later steps can use outputs from earlier steps
-4. Reference variables from context or previous steps using "$variable_name"
-5. Output variable names should be descriptive (e.g., "scraped_html", "extracted_data")
+2. Each step uses exactly ONE tool from available tools
+3. Reference context variables using "$variable_name"
+4. Output variable names should be descriptive
 
-**Output Format (JSON):**
+CRITICAL: You must respond with ONLY a valid JSON object, no other text.
+
+OUTPUT FORMAT:
 {{
   "steps": [
     {{
@@ -431,6 +449,6 @@ class Planner:
   ]
 }}
 
-Generate the plan now:"""
+Respond ONLY with the JSON object, nothing else:"""
 
         return prompt
