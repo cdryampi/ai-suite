@@ -16,8 +16,22 @@ from app.miniapps.market_scraper_privados.providers.base import (
 
 class TestMarketWorkflow(unittest.TestCase):
     def setUp(self):
+        # Mock JobStore
         self.job_store = MagicMock()
-        self.job_store.create.return_value = MagicMock(job_id="test_job_1", logs=[])
+
+        # Mock Job
+        self.job_mock = MagicMock()
+        self.job_mock.job_id = "test_job_1"
+        self.job_mock.logs = []
+        self.job_mock.result = {}  # Initialize result
+
+        # When complete is called, update result
+        def side_effect_complete(result):
+            self.job_mock.result = result
+
+        self.job_mock.complete.side_effect = side_effect_complete
+
+        self.job_store.create.return_value = self.job_mock
 
         self.llm_client = MagicMock()
         self.tool_registry = MagicMock()
@@ -29,12 +43,16 @@ class TestMarketWorkflow(unittest.TestCase):
         )
 
     @patch("app.miniapps.market_scraper_privados.workflow.Database")
+    @patch("app.miniapps.market_scraper_privados.workflow.FotocasaProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.IdealistaProvider")
     @patch("app.miniapps.market_scraper_privados.workflow.ListingClassifier")
-    def test_run_success(self, MockClassifier, MockProvider, MockDatabase):
+    def test_run_success(
+        self, MockClassifier, MockIdealista, MockFotocasa, MockDatabase
+    ):
         # Mock DB
         mock_db = MockDatabase.return_value
         mock_db.exists_listing.return_value = False
+        # Return one pending listing to classify (simulating one was new)
         mock_db.get_pending_listings.return_value = [
             {
                 "id": 1,
@@ -44,16 +62,32 @@ class TestMarketWorkflow(unittest.TestCase):
             }
         ]
 
-        # Mock Provider
-        mock_provider = MockProvider.return_value
-        mock_provider.name = "idealista"
-        mock_provider.search.return_value = [
-            ListingMetadata(external_id="1", url="http://test.com/1", title="Title")
+        # Mock Idealista
+        mock_idealista = MockIdealista.return_value
+        mock_idealista.name = "idealista"
+        mock_idealista.search.return_value = [
+            ListingMetadata(
+                external_id="1", url="http://idealista.com/1", title="Title"
+            )
         ]
-        mock_provider.fetch_details.return_value = RawListingData(
-            url="http://test.com/1",
+        mock_idealista.fetch_details.return_value = RawListingData(
+            url="http://idealista.com/1",
             html_content="<html>Description</html>",
             parsed_data={"description": "desc"},
+        )
+
+        # Mock Fotocasa
+        mock_fotocasa = MockFotocasa.return_value
+        mock_fotocasa.name = "fotocasa"
+        mock_fotocasa.search.return_value = [
+            ListingMetadata(
+                external_id="2", url="http://fotocasa.es/2", title="Title 2"
+            )
+        ]
+        mock_fotocasa.fetch_details.return_value = RawListingData(
+            url="http://fotocasa.es/2",
+            html_content="<html>Description 2</html>",
+            parsed_data={"description": "desc 2"},
         )
 
         # Mock Classifier
@@ -75,8 +109,10 @@ class TestMarketWorkflow(unittest.TestCase):
         self.assertTrue(self.artifact_manager.save_text.called)  # CSV export
 
         # Verify result stats
+        # 1 from Idealista + 1 from Fotocasa = 2 scraped
         print("Workflow Result:", result.result)
-        self.assertEqual(result.result["scraped"], 1)
+        self.assertEqual(result.result["scraped"], 2)
+        # We mocked get_pending_listings to return 1 item, so 1 classified
         self.assertEqual(result.result["private_found"], 1)
 
 

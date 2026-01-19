@@ -8,6 +8,7 @@ from .db import Database
 from .classifier import ListingClassifier
 from .exporter import LeadExporter
 from .providers.idealista import IdealistaProvider
+from .providers.fotocasa import FotocasaProvider
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +23,10 @@ class MarketScraperWorkflow(BaseMiniApp):
             id="market_scraper_privados",
             name="Private Market Scraper",
             description="Scrapes and identifies private real estate listings.",
-            version="1.0.0",
+            version="1.1.0",
             author="Sttil Team",
             tags=["real-estate", "scraper", "lead-gen"],
-            variants={1: "Default - Scrape Idealista (Demo)"},
+            variants={1: "Default - Idealista + Fotocasa (Demo)"},
         )
 
     def run(
@@ -42,12 +43,6 @@ class MarketScraperWorkflow(BaseMiniApp):
         started_at = datetime.now()
         logs = []
         artifacts = []
-
-        job_id = f"job_{int(started_at.timestamp())}"  # Ideally get from job_store.create inside BaseMiniApp wrapper
-        # But BaseMiniApp expects us to create the job?
-        # Checking base.py: run() calls job_store.create usually.
-        # Wait, BaseMiniApp.run is abstract. We implement it.
-        # We should create the job first thing.
 
         # Parse inputs
         try:
@@ -71,29 +66,42 @@ class MarketScraperWorkflow(BaseMiniApp):
             # 1. Initialize DB
             db = Database()
 
-            # 2. Scraping (Idealista)
+            # 2. Scraping (Multi-provider)
             self._log(job_id, "Starting scraping phase...")
-            provider = IdealistaProvider()
-            found_listings = provider.search(city, max_items)
 
-            new_count = 0
-            for meta in found_listings:
-                if not db.exists_listing(meta.url):
-                    # Fetch details
-                    details = provider.fetch_details(meta.url)
-                    if details:
-                        db.save_raw_listing(
-                            url=details.url,
-                            source=provider.name,
-                            external_id=meta.external_id,
-                            html_content=details.html_content,
-                            parsed_data=details.parsed_data,
-                        )
-                        new_count += 1
-                        # self._log(job_id, f"Saved new listing: {meta.url}")
+            providers = [IdealistaProvider(), FotocasaProvider()]
 
-            self._log(job_id, f"Scraping finished. New listings: {new_count}")
-            logs.append(f"Scraped {new_count} new listings")
+            total_new_count = 0
+
+            for provider in providers:
+                self._log(job_id, f"Running provider: {provider.name}...")
+                try:
+                    found_listings = provider.search(city, max_items)
+                    self._log(
+                        job_id, f"Found {len(found_listings)} items on {provider.name}"
+                    )
+
+                    for meta in found_listings:
+                        if not db.exists_listing(meta.url):
+                            # Fetch details
+                            details = provider.fetch_details(meta.url)
+                            if details:
+                                db.save_raw_listing(
+                                    url=details.url,
+                                    source=provider.name,
+                                    external_id=meta.external_id,
+                                    html_content=details.html_content,
+                                    parsed_data=details.parsed_data,
+                                )
+                                total_new_count += 1
+                except Exception as e:
+                    logger.error(f"Provider {provider.name} failed: {e}")
+                    self._log(job_id, f"Error running {provider.name}: {e}")
+
+            self._log(
+                job_id, f"Scraping finished. Total new listings: {total_new_count}"
+            )
+            logs.append(f"Scraped {total_new_count} new listings")
 
             # 3. Classification
             self._log(job_id, "Starting classification phase...")
@@ -153,7 +161,7 @@ class MarketScraperWorkflow(BaseMiniApp):
             # Complete
             job.complete(
                 result={
-                    "scraped": new_count,
+                    "scraped": total_new_count,
                     "classified": classified_count,
                     "private_found": private_count,
                     "csv_generated": bool(csv_path),

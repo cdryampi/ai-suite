@@ -23,7 +23,9 @@ class Database:
         Args:
             db_path: Path to the database file. If None, uses default in package dir.
         """
-        if db_path:
+        if db_path == ":memory:":
+            self.db_path = ":memory:"
+        elif db_path:
             self.db_path = Path(db_path)
         else:
             # Default to storage directory or package directory
