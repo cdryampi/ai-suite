@@ -134,20 +134,77 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     <div className="flex flex-col gap-6">
       {/* Input Section */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+        {appId === 'market_scraper_privados' ? (
+            <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">¿Cómo funciona?</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-200 leading-relaxed">
+                    1. Escriba la <strong>Ciudad</strong> donde busca piso (ej. "Madrid").<br/>
+                    2. Elija <strong>cuántos anuncios</strong> quiere que revisemos.<br/>
+                    3. Pulse <strong>"Buscar Particulares"</strong>.<br/>
+                    <span className="block mt-2 opacity-80">El sistema buscará en internet y le mostrará aquí abajo solo los que parecen ser dueños directos (sin comisión de agencia).</span>
+                </p>
+            </div>
+        ) : (
+            <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+        )}
+        
         <div className="flex gap-3 items-end">
           {appId === 'market_scraper_privados' ? (
             <>
               <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium">City / Zone</label>
+                <label className="text-sm font-medium">Ciudad o Zona</label>
                 <input
                   type="text"
-                  placeholder="e.g. Madrid"
+                  placeholder="Ej: Madrid, Barcelona, Valencia..."
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-12 w-full rounded-md border border-input bg-background px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
                 />
               </div>
+              <div className="w-40 space-y-2">
+                <label className="text-sm font-medium">Nº de anuncios</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={maxItems}
+                  onChange={(e) => setMaxItems(parseInt(e.target.value))}
+                  className="flex h-12 w-full rounded-md border border-input bg-background px-4 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+                />
+              </div>
+            </>
+          ) : (
+            <input
+              type="url"
+              placeholder="Enter listing URL (e.g. https://example.com/property)"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          )}
+          
+          <Button 
+            onClick={handleRun} 
+            disabled={isRunning || !canRun}
+            className={cn("h-12 px-6 font-semibold shadow-md", appId === 'market_scraper_privados' ? "w-auto min-w-[180px]" : "w-32")}
+            size="lg"
+          >
+            {isRunning ? (
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Buscando...</>
+            ) : (
+              <><Play className="mr-2 h-5 w-5" /> {appId === 'market_scraper_privados' ? 'Buscar Particulares' : 'Run'}</>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Logs Console */}
+      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[300px]">
+        <div className="bg-muted px-4 py-3 border-b border-border flex justify-between items-center">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Terminal className="w-4 h-4" />
+            {appId === 'market_scraper_privados' ? 'Registro de Actividad (Técnico)' : 'Execution Logs'}
+          </div>
               <div className="w-32 space-y-2">
                 <label className="text-sm font-medium">Max Items</label>
                 <input
@@ -222,36 +279,36 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
       {/* Leads Grid (Market Scraper Only) */}
       {appId === 'market_scraper_privados' && leads.length > 0 && (
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Live Leads Found ({leads.length})
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-3 text-green-700 dark:text-green-400">
+                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                Pisos de Particulares Encontrados ({leads.length})
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {leads.map((lead, i) => (
-                    <div key={i} className="flex flex-col p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors">
-                        <div className="flex justify-between items-start mb-2">
-                            <span className="text-xs font-mono text-muted-foreground uppercase">{lead.source}</span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium">
-                                {Math.round(lead.confidence * 100)}% Private
+                    <div key={i} className="flex flex-col p-5 rounded-xl border border-border bg-white dark:bg-card hover:shadow-md transition-all duration-300 group">
+                        <div className="flex justify-between items-start mb-3">
+                            <span className="text-xs font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider">{lead.source}</span>
+                            <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 font-semibold border border-green-200 dark:border-green-800">
+                                {lead.confidence > 0.8 ? 'Muy Probable Particular' : 'Posible Particular'}
                             </span>
                         </div>
-                        <h3 className="font-medium mb-1 line-clamp-1">{lead.parsed_data?.title || 'No Title'}</h3>
-                        <div className="text-lg font-bold text-primary mb-2">{lead.parsed_data?.price || 'Price N/A'}</div>
+                        <h3 className="font-semibold text-lg mb-1 line-clamp-1 group-hover:text-primary transition-colors">{lead.parsed_data?.title || 'Sin Título'}</h3>
+                        <div className="text-2xl font-bold text-slate-900 dark:text-white mb-3">{lead.parsed_data?.price || 'Precio N/A'}</div>
                         
-                        <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
+                        <div className="grid grid-cols-2 gap-3 text-sm text-slate-600 dark:text-slate-400 mb-4 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg">
                             <div>
-                                <span className="block text-xs opacity-70">Contact</span>
-                                {lead.contact_name || 'N/A'}
+                                <span className="block text-xs font-semibold uppercase opacity-70 mb-1">Contacto</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-200">{lead.contact_name || 'No detectado'}</span>
                             </div>
                             <div>
-                                <span className="block text-xs opacity-70">Phone</span>
-                                {lead.contact_phone || 'N/A'}
+                                <span className="block text-xs font-semibold uppercase opacity-70 mb-1">Teléfono</span>
+                                <span className="font-medium text-slate-900 dark:text-slate-200">{lead.contact_phone || 'No detectado'}</span>
                             </div>
                         </div>
                         
                         {lead.notes && (
-                            <div className="text-xs text-muted-foreground bg-background/50 p-2 rounded mb-3 line-clamp-2">
-                                {lead.notes}
+                            <div className="text-sm text-slate-600 dark:text-slate-400 italic mb-4 line-clamp-2 px-1">
+                                "{lead.notes}"
                             </div>
                         )}
                         
@@ -259,9 +316,9 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
                             href={lead.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-xs text-center py-2 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors mt-auto"
+                            className="text-sm font-semibold text-center py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm hover:shadow active:scale-[0.98] mt-auto"
                         >
-                            View Listing
+                            Ver Anuncio Original
                         </a>
                     </div>
                 ))}
