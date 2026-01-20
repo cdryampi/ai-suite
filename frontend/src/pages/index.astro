@@ -1,9 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import MiniAppCard from '../components/MiniAppCard.astro';
-import { Sparkles, Home, BarChart2, Smartphone, FileText } from 'lucide-react';
+import { Sparkles, Home, BarChart2, Smartphone, FileText, Search } from 'lucide-react';
 
 const miniApps = [
+  {
+    id: 'market_scraper_privados',
+    title: 'Buscador de Particulares',
+    description: 'Scrapea portales inmobiliarios y detecta propietarios particulares usando IA. Resultados en tiempo real.',
+    icon: Search,
+    status: 'ready',
+    tags: ['scraper', 'real-estate']
+  },
   {
     id: 'realestate_ads',
     title: 'Real Estate Ad Generator',
