@@ -49,10 +49,8 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     if (!jobId) return;
     
     // Stop polling if complete/failed, but ensure we do one last fetch to get final state
-    // We'll handle stopping inside the interval callback or via state
     if (['complete', 'failed', 'cancelled'].includes(status) && status !== 'running') {
         // Optional: clear interval if we want to stop strictly
-        // return; 
     }
 
     const pollInterval = setInterval(async () => {
@@ -68,8 +66,6 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
         
         const data: JobStatus = await res.json();
         
-        // Only update if state actually changed or logs grew
-        // Simply setting state is fine in React, it handles diffing
         setStatus(data.status);
         if (data.logs && data.logs.length > logs.length) {
             setLogs(data.logs);
@@ -88,7 +84,6 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
             const leadsRes = await fetch(`http://127.0.0.1:5000/api/miniapps/${appId}/jobs/${jobId}/leads`);
             if (leadsRes.ok) {
                 const leadsData = await leadsRes.json();
-                // Simple comparison or just set it
                 setLeads(leadsData);
             }
         }
@@ -99,11 +94,7 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     }, 1000);
 
     return () => clearInterval(pollInterval);
-  }, [jobId, status, appId, logs.length]); // Added logs.length dependency to help reactiveness? No, careful with loops.
-  // Actually, removing logs.length from dependency array is safer to avoid resetting interval constantly.
-  // Kept [jobId, status, appId] is better.
-  
-  // Reverting dependency change, logic inside interval handles updates.
+  }, [jobId, status, appId, logs.length]);
 
   const handleRun = async () => {
     // Validate inputs based on appId
@@ -226,49 +217,6 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
           <div className="flex items-center gap-2 text-sm font-medium">
             <Terminal className="w-4 h-4" />
             {appId === 'market_scraper_privados' ? 'Registro de Actividad (Técnico)' : 'Execution Logs'}
-          </div>
-              <div className="w-32 space-y-2">
-                <label className="text-sm font-medium">Max Items</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={maxItems}
-                  onChange={(e) => setMaxItems(parseInt(e.target.value))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-            </>
-          ) : (
-            <input
-              type="url"
-              placeholder="Enter listing URL (e.g. https://example.com/property)"
-              value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          )}
-          
-          <Button 
-            onClick={handleRun} 
-            disabled={isRunning || !canRun}
-            className="w-32"
-          >
-            {isRunning ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running</>
-            ) : (
-              <><Play className="mr-2 h-4 w-4" /> Run</>
-            )}
-          </Button>
-        </div>
-      </div>
-
-      {/* Logs Console */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[300px]">
-        <div className="bg-muted px-4 py-3 border-b border-border flex justify-between items-center">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Terminal className="w-4 h-4" />
-            Execution Logs
           </div>
           <div className={cn(
             "text-xs px-2 py-1 rounded-full font-medium capitalize flex items-center gap-1.5",

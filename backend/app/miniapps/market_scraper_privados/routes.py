@@ -19,37 +19,46 @@ def init_miniapp(job_store, llm_client, tool_registry, artifact_manager):
 @bp.route("/run", methods=["POST"])
 def run_scraper():
     """
-    Run the market scraper workflow.
+    Run the market scraper workflow asynchronously.
     Expects JSON body: {"city": "Madrid", "max_items": 10, ...}
+
+    Returns immediately with job_id.
     """
     miniapp = current_app.config.get("MARKET_SCRAPER_PRIVADOS_MINIAPP")
-    if not miniapp:
-        return jsonify({"error": "Mini app not initialized"}), 500
+    job_runner = current_app.config.get("JOB_RUNNER")
+    job_store = current_app.config.get("JOB_STORE")
+
+    if not miniapp or not job_runner or not job_store:
+        return jsonify({"error": "System components not initialized"}), 500
 
     data = request.get_json() or {}
-    input_str = request.data.decode(
-        "utf-8"
-    )  # Pass raw JSON string or parsed? BaseMiniApp run expects string usually?
-    # Checking BaseMiniApp.run signature in base.py: run(self, input_data: str, ...)
-    # But in workflow.py I implemented: input_data: str.
-    # So I should pass the JSON string.
 
-    import json
-
-    input_json_str = json.dumps(data)
-
-    result = miniapp.run(input_data=input_json_str)
-
-    # Convert Result to dict
-    return jsonify(
-        {
-            "status": result.status,
-            "logs": result.logs,
-            "result": result.result,
-            "artifacts": result.artifacts,
-            "error": result.error,
-        }
+    # 1. Create Job explicitly
+    job = job_store.create(
+        miniapp_id=miniapp.metadata.id, input_data=data, variant=data.get("variant", 1)
     )
+
+    # 2. Define the executor wrapper
+    # The JobRunner executes this in a thread.
+    # Signature: (job, on_log) -> result_dict
+    def execution_wrapper(job_obj, on_log):
+        # We delegate to the workflow's execute method
+        # Note: We pass the 'on_log' callback so the workflow updates status real-time
+        return miniapp.execute(job_obj, on_log)
+
+    # 3. Submit to JobRunner
+    try:
+        job_runner.submit(job, execution_wrapper)
+
+        return jsonify(
+            {
+                "status": "queued",
+                "job_id": job.job_id,
+                "message": "Job submitted successfully",
+            }
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @bp.route("/status/<job_id>", methods=["GET"])
