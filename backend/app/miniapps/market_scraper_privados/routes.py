@@ -73,6 +73,36 @@ def get_status(job_id):
     return jsonify(job.to_dict())
 
 
+@bp.route("/leads", methods=["GET"])
+def get_all_leads():
+    """
+    Get all leads with pagination.
+    Query params: page (int), limit (int), status (str)
+    """
+    try:
+        from .db import Database
+
+        db = Database()
+
+        page = request.args.get("page", 1, type=int)
+        limit = request.args.get("limit", 20, type=int)
+        status = request.args.get("status")
+
+        leads, total = db.get_leads_paginated(page, limit, status)
+
+        return jsonify(
+            {
+                "items": leads,
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "pages": (total + limit - 1) // limit,
+            }
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/jobs/<job_id>/leads", methods=["GET"])
 def get_job_leads(job_id):
     """
