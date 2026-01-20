@@ -72,6 +72,7 @@ class Database:
             CREATE TABLE IF NOT EXISTS leads (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 raw_listing_id INTEGER NOT NULL,
+                job_id TEXT,
                 is_private BOOLEAN NOT NULL CHECK (is_private IN (0, 1)),
                 confidence REAL,
                 contact_name TEXT,
@@ -84,7 +85,15 @@ class Database:
             )
         """)
 
+        # Migration: Add job_id column if not exists (for existing DBs)
+        try:
+            cursor.execute("ALTER TABLE leads ADD COLUMN job_id TEXT")
+        except sqlite3.OperationalError:
+            # Column likely already exists
+            pass
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_lead_status ON leads(status)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_lead_job ON leads(job_id)")
 
         conn.commit()
         conn.close()
@@ -166,7 +175,9 @@ class Database:
     # Lead Operations
     # ----------------------------------------------------------------
 
-    def save_lead(self, listing_id: int, classification_data: dict) -> int:
+    def save_lead(
+        self, listing_id: int, classification_data: dict, job_id: Optional[str] = None
+    ) -> int:
         """
         Save a classification result as a Lead.
         """
@@ -183,10 +194,18 @@ class Database:
         # Insert lead
         cursor.execute(
             """
-            INSERT INTO leads (raw_listing_id, is_private, confidence, contact_name, contact_phone, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO leads (raw_listing_id, job_id, is_private, confidence, contact_name, contact_phone, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-            (listing_id, is_private, confidence, contact_name, contact_phone, notes),
+            (
+                listing_id,
+                job_id,
+                is_private,
+                confidence,
+                contact_name,
+                contact_phone,
+                notes,
+            ),
         )
 
         lead_id = cursor.lastrowid
@@ -202,6 +221,35 @@ class Database:
         conn.commit()
         conn.close()
         return lead_id
+
+    def get_leads_by_job(self, job_id: str) -> List[dict]:
+        """Get leads associated with a specific job."""
+        conn = self._get_conn()
+        cursor = conn.cursor()
+
+        # Only return private leads for now, as per requirements
+        query = """
+            SELECT l.*, r.url, r.source, r.parsed_data
+            FROM leads l
+            JOIN raw_listings r ON l.raw_listing_id = r.id
+            WHERE l.job_id = ? AND l.is_private = 1
+            ORDER BY l.created_at DESC
+        """
+        cursor.execute(query, (job_id,))
+        rows = cursor.fetchall()
+
+        results = []
+        for row in rows:
+            d = dict(row)
+            if d.get("parsed_data"):
+                try:
+                    d["parsed_data"] = json.loads(d["parsed_data"])
+                except:
+                    d["parsed_data"] = {}
+            results.append(d)
+
+        conn.close()
+        return results
 
     def get_new_leads(self) -> List[dict]:
         """Get validated private leads that haven't been exported."""

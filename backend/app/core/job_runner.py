@@ -98,6 +98,9 @@ class JobRunner:
             def on_log(message: str):
                 if cancel_event.is_set():
                     raise InterruptedError("Job cancelled")
+                # Force update from DB to avoid overwriting recent changes?
+                # Ideally JobStore handles this, but for safety in threads:
+                # We append to local object and save.
                 job.add_log(message)
                 self.job_store.update(job)
 
