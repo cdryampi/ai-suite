@@ -43,6 +43,34 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const ITEMS_PER_PAGE = 10;
+
+  // Initial fetch of history
+  useEffect(() => {
+    if (appId === 'market_scraper_privados') {
+        fetchHistory(1);
+    }
+  }, [appId]);
+
+  const fetchHistory = async (page: number) => {
+      try {
+          const res = await fetch(`http://127.0.0.1:5000/api/miniapps/market_scraper_privados/leads?page=${page}&limit=${ITEMS_PER_PAGE}`);
+          if (res.ok) {
+              const data = await res.json();
+              setLeads(data.items);
+              setTotalPages(data.pages);
+              setTotalItems(data.total);
+              setCurrentPage(data.page);
+          }
+      } catch (err) {
+          console.error("Failed to fetch history:", err);
+      }
+  };
+
   // Polling logic
   useEffect(() => {
     if (!jobId) return;
@@ -349,6 +377,30 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
                     </div>
                 ))}
             </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 pt-4">
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        disabled={currentPage <= 1}
+                        onClick={() => fetchHistory(currentPage - 1)}
+                    >
+                        Anterior
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                        Página {currentPage} de {totalPages}
+                    </span>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        disabled={currentPage >= totalPages}
+                        onClick={() => fetchHistory(currentPage + 1)}
+                    >
+                        Siguiente
+                    </Button>
+                </div>
+            )}
         </div>
       )}
 

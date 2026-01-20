@@ -278,6 +278,57 @@ class Database:
         conn.close()
         return results
 
+    def get_leads_paginated(
+        self, page: int = 1, limit: int = 20, status: Optional[str] = None
+    ) -> Tuple[List[dict], int]:
+        """
+        Get leads with pagination and optional filtering.
+        Returns (leads, total_count).
+        """
+        conn = self._get_conn()
+        cursor = conn.cursor()
+        offset = (page - 1) * limit
+
+        # Base query for counting
+        count_query = "SELECT COUNT(*) FROM leads WHERE is_private = 1"
+        params = []
+        if status:
+            count_query += " AND status = ?"
+            params.append(status)
+
+        cursor.execute(count_query, params)
+        total_count = cursor.fetchone()[0]
+
+        # Query for data
+        data_query = """
+            SELECT l.*, r.url, r.source, r.parsed_data
+            FROM leads l
+            JOIN raw_listings r ON l.raw_listing_id = r.id
+            WHERE l.is_private = 1
+        """
+        if status:
+            data_query += " AND l.status = ?"
+
+        data_query += " ORDER BY l.created_at DESC LIMIT ? OFFSET ?"
+        params.append(limit)
+        params.append(offset)
+
+        cursor.execute(data_query, params)
+        rows = cursor.fetchall()
+
+        results = []
+        for row in rows:
+            d = dict(row)
+            if d.get("parsed_data"):
+                try:
+                    d["parsed_data"] = json.loads(d["parsed_data"])
+                except:
+                    d["parsed_data"] = {}
+            results.append(d)
+
+        conn.close()
+        return results, total_count
+
     def update_lead(self, lead_id: int, updates: Dict[str, Any]):
         """
         Update a lead's fields (status, notes, etc.).
