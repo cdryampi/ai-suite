@@ -278,8 +278,29 @@ class Database:
         conn.close()
         return results
 
-    def mark_leads_exported(self, lead_ids: List[int]):
-        """Mark leads as exported."""
+    def update_lead(self, lead_id: int, updates: Dict[str, Any]):
+        """
+        Update a lead's fields (status, notes, etc.).
+        """
+        if not updates:
+            return
+
+        conn = self._get_conn()
+
+        # Whitelist allowed fields for safety
+        allowed_fields = {"status", "notes", "is_private", "confidence"}
+        safe_updates = {k: v for k, v in updates.items() if k in allowed_fields}
+
+        if not safe_updates:
+            return
+
+        set_clause = ", ".join([f"{k} = ?" for k in safe_updates.keys()])
+        values = list(safe_updates.values())
+        values.append(lead_id)
+
+        conn.execute(f"UPDATE leads SET {set_clause} WHERE id = ?", values)
+        conn.commit()
+        conn.close()
         if not lead_ids:
             return
 

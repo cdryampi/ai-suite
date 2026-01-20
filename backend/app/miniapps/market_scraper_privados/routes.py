@@ -86,3 +86,23 @@ def get_job_leads(job_id):
         return jsonify(leads)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@bp.route("/leads/<int:lead_id>", methods=["PATCH"])
+def update_lead(lead_id):
+    """
+    Update a lead's status or notes.
+    """
+    try:
+        from .db import Database
+
+        db = Database()
+
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        db.update_lead(lead_id, data)
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
