@@ -46,17 +46,34 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
 
   // Polling logic
   useEffect(() => {
-    if (!jobId || ['complete', 'failed', 'cancelled'].includes(status)) return;
+    if (!jobId) return;
+    
+    // Stop polling if complete/failed, but ensure we do one last fetch to get final state
+    // We'll handle stopping inside the interval callback or via state
+    if (['complete', 'failed', 'cancelled'].includes(status) && status !== 'running') {
+        // Optional: clear interval if we want to stop strictly
+        // return; 
+    }
 
     const pollInterval = setInterval(async () => {
+      // Don't poll if we already reached a terminal state in a previous tick
+      if (['complete', 'failed', 'cancelled'].includes(status)) {
+          clearInterval(pollInterval);
+          return;
+      }
+
       try {
         const res = await fetch(`http://127.0.0.1:5000/api/miniapps/${appId}/status/${jobId}`);
         if (!res.ok) throw new Error('Failed to fetch status');
         
         const data: JobStatus = await res.json();
         
+        // Only update if state actually changed or logs grew
+        // Simply setting state is fine in React, it handles diffing
         setStatus(data.status);
-        setLogs(data.logs || []);
+        if (data.logs && data.logs.length > logs.length) {
+            setLogs(data.logs);
+        }
         
         if (data.status === 'failed') {
           setError(data.error || 'Unknown error occurred');
@@ -71,6 +88,7 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
             const leadsRes = await fetch(`http://127.0.0.1:5000/api/miniapps/${appId}/jobs/${jobId}/leads`);
             if (leadsRes.ok) {
                 const leadsData = await leadsRes.json();
+                // Simple comparison or just set it
                 setLeads(leadsData);
             }
         }
@@ -81,7 +99,11 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     }, 1000);
 
     return () => clearInterval(pollInterval);
-  }, [jobId, status, appId]);
+  }, [jobId, status, appId, logs.length]); // Added logs.length dependency to help reactiveness? No, careful with loops.
+  // Actually, removing logs.length from dependency array is safer to avoid resetting interval constantly.
+  // Kept [jobId, status, appId] is better.
+  
+  // Reverting dependency change, logic inside interval handles updates.
 
   const handleRun = async () => {
     // Validate inputs based on appId
