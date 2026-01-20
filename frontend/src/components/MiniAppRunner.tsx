@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, CheckCircle, AlertCircle, Terminal, FileJson, FileText, Download } from 'lucide-react';
+import { Play, Loader2, CheckCircle, AlertCircle, Terminal, FileJson, FileText, Download, Info } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import LeadDetailModal from './LeadDetailModal';
 
 interface MiniAppRunnerProps {
   appId: string;
@@ -36,6 +37,8 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
   const [error, setError] = useState<string | null>(null);
   const [artifacts, setArtifacts] = useState<JobStatus['artifacts']>([]);
   const [leads, setLeads] = useState<any[]>([]);
+  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -140,11 +143,41 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     }
   };
 
+  const handleLeadUpdate = async (leadId: number, updates: any) => {
+    try {
+        await fetch(`http://127.0.0.1:5000/api/miniapps/market_scraper_privados/leads/${leadId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates)
+        });
+        
+        // Update local state to reflect changes immediately
+        setLeads(prev => prev.map(l => l.id === leadId ? { ...l, ...updates } : l));
+        if (selectedLead?.id === leadId) {
+            setSelectedLead(prev => ({ ...prev, ...updates }));
+        }
+    } catch (err) {
+        console.error("Failed to update lead", err);
+    }
+  };
+
+  const openLeadDetail = (lead: any) => {
+      setSelectedLead(lead);
+      setIsModalOpen(true);
+  };
+
   const isRunning = status === 'running';
   const canRun = appId === 'market_scraper_privados' ? !!city : !!inputUrl;
 
   return (
     <div className="flex flex-col gap-6">
+      <LeadDetailModal 
+        lead={selectedLead} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onUpdate={handleLeadUpdate}
+      />
+
       {/* Input Section */}
       <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         {appId === 'market_scraper_privados' ? (
@@ -255,13 +288,40 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {leads.map((lead, i) => (
-                    <div key={i} className="flex flex-col p-5 rounded-xl border border-border bg-white dark:bg-card hover:shadow-md transition-all duration-300 group">
+                    <div key={i} 
+                        onClick={() => openLeadDetail(lead)}
+                        className={cn(
+                            "flex flex-col p-5 rounded-xl border bg-white dark:bg-card hover:shadow-md transition-all duration-300 group cursor-pointer relative",
+                            lead.status === 'rejected' ? "border-red-200 bg-red-50/50 opacity-60" : 
+                            lead.status === 'called' ? "border-green-200 bg-green-50/50" :
+                            "border-border hover:border-primary/50"
+                        )}
+                    >
                         <div className="flex justify-between items-start mb-3">
                             <span className="text-xs font-bold px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider">{lead.source}</span>
-                            <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 font-semibold border border-green-200 dark:border-green-800">
-                                {lead.confidence > 0.8 ? 'Muy Probable Particular' : 'Posible Particular'}
-                            </span>
+                            <div className="flex gap-2">
+                                {lead.notes && (
+                                    <div className="group/tooltip relative">
+                                        <Info className="w-5 h-5 text-blue-500" />
+                                        <div className="absolute bottom-full right-0 mb-2 w-48 p-2 bg-black text-white text-xs rounded shadow-lg hidden group-hover/tooltip:block z-10">
+                                            {lead.notes}
+                                        </div>
+                                    </div>
+                                )}
+                                <span className={cn(
+                                    "text-xs px-3 py-1 rounded-full font-semibold border",
+                                    lead.status === 'new' ? "bg-green-100 text-green-800 border-green-200" :
+                                    lead.status === 'seen' ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
+                                    lead.status === 'called' ? "bg-blue-100 text-blue-800 border-blue-200" :
+                                    "bg-gray-100 text-gray-800 border-gray-200"
+                                )}>
+                                    {lead.status === 'new' ? 'Nuevo' : 
+                                     lead.status === 'seen' ? 'Visto' :
+                                     lead.status === 'called' ? 'Llamado' : 'Descartado'}
+                                </span>
+                            </div>
                         </div>
+                        
                         <h3 className="font-semibold text-lg mb-1 line-clamp-1 group-hover:text-primary transition-colors">{lead.parsed_data?.title || 'Sin Título'}</h3>
                         <div className="text-2xl font-bold text-slate-900 dark:text-white mb-3">{lead.parsed_data?.price || 'Precio N/A'}</div>
                         
@@ -276,20 +336,9 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
                             </div>
                         </div>
                         
-                        {lead.notes && (
-                            <div className="text-sm text-slate-600 dark:text-slate-400 italic mb-4 line-clamp-2 px-1">
-                                "{lead.notes}"
-                            </div>
-                        )}
-                        
-                        <a 
-                            href={lead.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm font-semibold text-center py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm hover:shadow active:scale-[0.98] mt-auto"
-                        >
-                            Ver Anuncio Original
-                        </a>
+                        <div className="mt-auto pt-2 text-xs text-center text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                            Clic para ver detalles y gestionar
+                        </div>
                     </div>
                 ))}
             </div>
