@@ -62,3 +62,18 @@ def get_status(job_id):
         return jsonify({"error": "Job not found"}), 404
 
     return jsonify(job.to_dict())
+
+
+@bp.route("/jobs/<job_id>/leads", methods=["GET"])
+def get_job_leads(job_id):
+    """
+    Get progressive leads for a specific job.
+    """
+    try:
+        from .db import Database
+
+        db = Database()
+        leads = db.get_leads_by_job(job_id)
+        return jsonify(leads)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

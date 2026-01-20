@@ -119,7 +119,7 @@ class MarketScraperWorkflow(BaseMiniApp):
 
             result = classifier.classify_listing(text_to_analyze)
 
-            db.save_lead(item["id"], result)
+            db.save_lead(item["id"], result, job_id=job.job_id)
             classified_count += 1
             if result.get("is_private"):
                 private_count += 1

@@ -35,6 +35,7 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
   const [logs, setLogs] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [artifacts, setArtifacts] = useState<JobStatus['artifacts']>([]);
+  const [leads, setLeads] = useState<any[]>([]);
   
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -62,12 +63,16 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
         }
         
         if (data.status === 'complete') {
-            // Fetch artifacts if complete (usually included in status but just in case)
-            // In our API design, status endpoint doesn't return artifacts by default? 
-            // Actually artifacts are in the Job object, so they should be there.
-            // Let's assume the API returns them or we need another call.
-            // Based on backend implementation: to_dict includes artifacts.
             setArtifacts(data.artifacts);
+        }
+
+        // Specific polling for Market Scraper results
+        if (appId === 'market_scraper_privados') {
+            const leadsRes = await fetch(`http://127.0.0.1:5000/api/miniapps/${appId}/jobs/${jobId}/leads`);
+            if (leadsRes.ok) {
+                const leadsData = await leadsRes.json();
+                setLeads(leadsData);
+            }
         }
 
       } catch (err) {
@@ -90,6 +95,7 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
     setLogs(['Starting job...']);
     setError(null);
     setArtifacts([]);
+    setLeads([]);
     
     try {
       let bodyData: any = { variant: 1 };
@@ -179,7 +185,7 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
       </div>
 
       {/* Logs Console */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[400px]">
+      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col h-[300px]">
         <div className="bg-muted px-4 py-3 border-b border-border flex justify-between items-center">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Terminal className="w-4 h-4" />
@@ -212,6 +218,56 @@ export default function MiniAppRunner({ appId }: MiniAppRunnerProps) {
           <div ref={logsEndRef} />
         </div>
       </div>
+
+      {/* Leads Grid (Market Scraper Only) */}
+      {appId === 'market_scraper_privados' && leads.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Live Leads Found ({leads.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {leads.map((lead, i) => (
+                    <div key={i} className="flex flex-col p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                            <span className="text-xs font-mono text-muted-foreground uppercase">{lead.source}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-medium">
+                                {Math.round(lead.confidence * 100)}% Private
+                            </span>
+                        </div>
+                        <h3 className="font-medium mb-1 line-clamp-1">{lead.parsed_data?.title || 'No Title'}</h3>
+                        <div className="text-lg font-bold text-primary mb-2">{lead.parsed_data?.price || 'Price N/A'}</div>
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
+                            <div>
+                                <span className="block text-xs opacity-70">Contact</span>
+                                {lead.contact_name || 'N/A'}
+                            </div>
+                            <div>
+                                <span className="block text-xs opacity-70">Phone</span>
+                                {lead.contact_phone || 'N/A'}
+                            </div>
+                        </div>
+                        
+                        {lead.notes && (
+                            <div className="text-xs text-muted-foreground bg-background/50 p-2 rounded mb-3 line-clamp-2">
+                                {lead.notes}
+                            </div>
+                        )}
+                        
+                        <a 
+                            href={lead.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-xs text-center py-2 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors mt-auto"
+                        >
+                            View Listing
+                        </a>
+                    </div>
+                ))}
+            </div>
+        </div>
+      )}
 
       {/* Results / Artifacts */}
       {artifacts && artifacts.length > 0 && (
